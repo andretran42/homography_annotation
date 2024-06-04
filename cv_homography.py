@@ -1,5 +1,7 @@
 import cv2
 import numpy as np
+import os
+import pandas as pd
 
 rainbow_colors = [
     (238, 130, 238),  # Violet
@@ -12,8 +14,12 @@ rainbow_colors = [
 ]
 color_index = 0
 color_index2 = 0
+
+csv_file = "./data_labels.csv"
+
  
 if __name__ == '__main__' :
+
     im_src = cv2.imread('test_field.png')
     im_dst = cv2.imread('ucla.png')
     points_src = np.empty((0, 2), int)
@@ -36,21 +42,27 @@ if __name__ == '__main__' :
             points_dest = np.append(points_dest, np.array([[x,y]]), axis=0)
             print(points_dest)
 
-    cv2.namedWindow('Image')
-    cv2.namedWindow('Image2')
-    cv2.setMouseCallback('Image', get_coordinates)
-    cv2.setMouseCallback('Image2', get_coordinates2)
+    folder_path = "./img_data"
+    images = [f for f in os.listdir(folder_path) if f.endswith('.png')]
+    for image_path in images:
+    # Read the image
+        im_src = cv2.imread(os.path.join(folder_path, image_path))
+        im_dst = cv2.imread('ucla.png')
+        cv2.namedWindow('Image')
+        cv2.setMouseCallback('Image', get_coordinates)
+        cv2.namedWindow('Image2')
+        cv2.setMouseCallback('Image2', get_coordinates2)
 
-    while True:
+        while True:
     # Display the image
-        cv2.imshow('Image', im_src)
-        cv2.imshow('Image2', im_dst)
+            cv2.imshow('Image', im_src)
+            cv2.imshow('Image2', im_dst)
 
         # Break the loop when 'q' key is pressed
-        if cv2.waitKey(1) & 0xFF == ord('q'):
-            break
-    cv2.destroyAllWindows()
-    print(points_src)
+            if cv2.waitKey(1) & 0xFF == ord('q'):
+                break
+        cv2.destroyAllWindows()
+        print(points_src)
     
     # Four corners of the book in source image
     # pts_src = np.array([[288, 235], [314, 528], [681, 801],[1005, 765], [761, 217], [1656, 751], [1990, 455]])
@@ -61,17 +73,25 @@ if __name__ == '__main__' :
     # pts_dst = np.array([[1304, 26],[1305, 408],[1403, 665],[1497, 665], [1495, 26], [1693, 666], [1888, 405]])
 
     # Calculate Homography
-    h, status = cv2.findHomography(points_src, points_dest)
+        h, status = cv2.findHomography(points_src, points_dest)
+
+        flattened_array = h.flatten()
+        column_labels = [f'Column{i+1}' for i in range(flattened_array.shape[0])]
+        df = pd.DataFrame([flattened_array], columns=column_labels)
+        df['Filename'] = image_path
+        df.to_csv(csv_file, mode='a', header=False, index=False)
 
     # # Warp source image to destination based on homography
-    im_out = cv2.warpPerspective(im_src, h, (im_dst.shape[1],im_dst.shape[0]))
+        im_out = cv2.warpPerspective(im_src, h, (im_dst.shape[1],im_dst.shape[0]))
 
     # points_to_transform = np.array([[0, 221]], dtype=float)
     # transformed_points = cv2.perspectiveTransform(np.array([points_to_transform]), h)
     # print(transformed_points)
 
     # Display images
-    cv2.imshow("Source Image", im_src)
-    cv2.imshow("Destination Image", im_dst)
-    cv2.imshow("Warped Source Image", im_out)
-    cv2.waitKey(0)
+        cv2.imshow("Source Image", im_src)
+        cv2.imshow("Destination Image", im_dst)
+        cv2.imshow("Warped Source Image", im_out)
+        points_image1 = np.empty((0, 2), int)
+        points_image2 = np.empty((0, 2), int)
+        cv2.waitKey(0)
