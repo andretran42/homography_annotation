@@ -19,7 +19,6 @@ csv_file = "./data_labels.csv"
 
  
 if __name__ == '__main__' :
-
     im_src = cv2.imread('test_field.png')
     im_dst = cv2.imread('ucla.png')
     points_src = np.empty((0, 2), int)
@@ -27,20 +26,17 @@ if __name__ == '__main__' :
     def get_coordinates(event, x, y, flags, param):
         global color_index, points_src
         if event == cv2.EVENT_LBUTTONDOWN:  # Left mouse button click
-            print(f"Coordinates: ({x}, {y})")
             cv2.circle(im_src, (x, y), 6, rainbow_colors[color_index], -1)
             color_index = (color_index + 1) % len(rainbow_colors)
             points_src = np.append(points_src, np.array([[x,y]]), axis=0)
     def get_coordinates2(event, x, y, flags, param):
         global color_index2, points_dest
         if event == cv2.EVENT_LBUTTONDOWN:  # Left mouse button click
-            print(f"Image 2 - Coordinates: ({x}, {y})")
             # Draw a dot with the current rainbow color on the second image
             cv2.circle(im_dst, (x, y), 6, rainbow_colors[color_index2], -1)
             # Move to the next color in the list
             color_index2 = (color_index2 + 1) % len(rainbow_colors)
             points_dest = np.append(points_dest, np.array([[x,y]]), axis=0)
-            print(points_dest)
 
     folder_path = "./img_data"
     images = [f for f in os.listdir(folder_path) if f.endswith('.png')]
@@ -62,7 +58,6 @@ if __name__ == '__main__' :
             if cv2.waitKey(1) & 0xFF == ord('q'):
                 break
         cv2.destroyAllWindows()
-        print(points_src)
     
     # Four corners of the book in source image
     # pts_src = np.array([[288, 235], [314, 528], [681, 801],[1005, 765], [761, 217], [1656, 751], [1990, 455]])
@@ -74,11 +69,12 @@ if __name__ == '__main__' :
 
     # Calculate Homography
         h, status = cv2.findHomography(points_src, points_dest)
+        print(h)
 
         flattened_array = h.flatten()
         column_labels = [f'Column{i+1}' for i in range(flattened_array.shape[0])]
         df = pd.DataFrame([flattened_array], columns=column_labels)
-        df['Filename'] = image_path
+        df.insert(0,'Filename',image_path)
         df.to_csv(csv_file, mode='a', header=False, index=False)
 
     # # Warp source image to destination based on homography
@@ -92,6 +88,6 @@ if __name__ == '__main__' :
         cv2.imshow("Source Image", im_src)
         cv2.imshow("Destination Image", im_dst)
         cv2.imshow("Warped Source Image", im_out)
-        points_image1 = np.empty((0, 2), int)
-        points_image2 = np.empty((0, 2), int)
+        points_src = np.empty((0, 2), int)
+        points_dest = np.empty((0, 2), int)
         cv2.waitKey(0)

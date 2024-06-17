@@ -2,3 +2,10 @@
 /.ipynb_checkpoints
 /HM_Py_notebook.ipynb
 /img_data
+/img_done
+/img_pred
+/img_pred_stage
+/img_labels
+/data_labels.csv
+/homography_model.pth
+/homography_model_corners.pth
