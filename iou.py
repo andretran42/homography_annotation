@@ -9,11 +9,12 @@ import cv2
 import numpy as np
 import os
 from shapely.geometry import box, Polygon
+from numpy.linalg import inv
 
 class HomographyResNet(nn.Module):
     def __init__(self, pretrained=True):
         super(HomographyResNet, self).__init__()
-        self.resnet = models.resnet50(pretrained=pretrained)
+        self.resnet = models.resnet18(pretrained=pretrained)
         self.resnet.fc = nn.Linear(self.resnet.fc.in_features, 8)  # Output 8 values for the homography matrix
 
     def forward(self, x):
@@ -59,15 +60,36 @@ for index, row in df.iterrows():
 
     image = cv2.imread(im_path)
     dim = image.shape
-    p1 = [0, 0]
-    p2 = [dim[1], 0]
-    p3 = [dim[1], dim[0]]
-    p4 = [0, dim[0]]
+    p1 = [row[10], row[11]]
+    p2 = [row[12], row[13]]
+    p3 = [row[14], row[15]]
+    p4 = [row[16], row[17]]
     wp1 = [predicted_homography[0], predicted_homography[1]]
     wp2 = [predicted_homography[2], predicted_homography[3]]
     wp3 = [predicted_homography[4], predicted_homography[5]]
     wp4 = [predicted_homography[6], predicted_homography[7]]
+    ap1 = np.array([p1], dtype=float) #top left
+    ap2 = np.array([p2], dtype=float) #top right
+    ap3 = np.array([p3], dtype=float) #bottom right
+    ap4 = np.array([p4], dtype=float) #bottom left
+    awp1 = np.array([wp1], dtype=float)
+    awp2 = np.array([wp2], dtype=float)
+    awp3 = np.array([wp3], dtype=float)
+    awp4 = np.array([wp4], dtype=float)
+    pts_src = np.array([ap1, ap2, ap3, ap4])
+    pts_dest = np.array([awp1, awp2, awp3, awp4])
+    # hm, status = cv2.findHomography(pts_src, pts_dest)
+    # wwp1 = cv2.perspectiveTransform(np.array([awp1]), hm).reshape(2)
+    # wwp2 = cv2.perspectiveTransform(np.array([awp2]), hm).reshape(2)
+    # wwp3 = cv2.perspectiveTransform(np.array([awp3]), hm).reshape(2)
+    # wwp4 = cv2.perspectiveTransform(np.array([awp4]), hm).reshape(2)
+    # wap1 = cv2.perspectiveTransform(np.array([ap1]), hm).reshape(2)
+    # wap2 = cv2.perspectiveTransform(np.array([ap2]), hm).reshape(2)
+    # wap3 = cv2.perspectiveTransform(np.array([ap3]), hm).reshape(2)
+    # wap4 = cv2.perspectiveTransform(np.array([ap4]), hm).reshape(2)
 
+    # pol1_xy = [wap1, wap2, wap3, wap4]
+    # pol2_xy = [wwp1, wwp2, wwp3, wwp4]
     pol1_xy = [p1, p2, p3, p4]
     pol2_xy = [wp1, wp2, wp3, wp4]
     polygon1_shape = Polygon(pol1_xy)
@@ -80,7 +102,7 @@ for index, row in df.iterrows():
 
     total_sum += IOU
     total_num += 1
-    print(IOU)
+    print(str(IOU) + ": " + row[0])
 print(total_sum/total_num)
 
 

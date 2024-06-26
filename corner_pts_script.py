@@ -32,18 +32,18 @@ if __name__ == '__main__' :
         wp2 = cv2.perspectiveTransform(np.array([p2]), h).reshape(2)
         wp3 = cv2.perspectiveTransform(np.array([p3]), h).reshape(2)
         wp4 = cv2.perspectiveTransform(np.array([p4]), h).reshape(2)
-        df.loc[index, 'x1'] = wp1[0]
-        df.loc[index, 'y1'] = wp1[1]
-        df.loc[index, 'x2'] = wp2[0]
-        df.loc[index, 'y2'] = wp2[1]
-        df.loc[index, 'x3'] = wp3[0]
-        df.loc[index, 'y3'] = wp3[1]
-        df.loc[index, 'x4'] = wp4[0]
-        df.loc[index, 'y4'] = wp4[1]
+        df.loc[index, 10] = wp1[0]
+        df.loc[index, 11] = wp1[1]
+        df.loc[index, 12] = wp2[0]
+        df.loc[index, 13] = wp2[1]
+        df.loc[index, 14] = wp3[0]
+        df.loc[index, 15] = wp3[1]
+        df.loc[index, 16] = wp4[0]
+        df.loc[index, 17] = wp4[1]
         # pts_src = np.array([p1, p2, p3, p4])
         # pts_dest = np.array([wp1, wp2, wp3, wp4])
         # print(pts_src)
         # print(pts_dest)
         # hm, status = cv2.findHomography(pts_src, pts_dest)
         # im_out = cv2.warpPerspective(im_src, hm, (im_dst.shape[1],im_dst.shape[0]))
-    df.to_csv(csv_file, mode='a', header=False, index=False)
+    df.to_csv(csv_file, mode='w', header=False, index=False)

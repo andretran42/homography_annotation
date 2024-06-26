@@ -13,7 +13,7 @@ import os
 class HomographyResNet(nn.Module):
     def __init__(self, pretrained=True):
         super(HomographyResNet, self).__init__()
-        self.resnet = models.resnet50(pretrained=pretrained)
+        self.resnet = models.resnet18(pretrained=pretrained)
         self.resnet.fc = nn.Linear(self.resnet.fc.in_features, 8)  # Output 8 values for the homography matrix
 
     def forward(self, x):
@@ -26,7 +26,7 @@ transform = transforms.Compose([
 ])
 
 # Load the image
-image_path = './img_pred/img_pred9.png'
+image_path = './img_pred/img_pred3.png'
 image = Image.open(image_path).convert('RGB')
 im_dst = cv2.imread('ucla.png')
 input_image = transform(image).unsqueeze(0)

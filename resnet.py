@@ -5,6 +5,7 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
+import time
 
 class HomographyResNet(nn.Module):
     def __init__(self, pretrained=True):
@@ -20,7 +21,7 @@ class HomographyDatasetFromCSV(Dataset):
         df = pd.read_csv(csv_file, header=None)
         # print(df.head())
         # print(df.info())
-        df[0] = df[0].apply(lambda x: "/Users/andre/repos/python_hm/img_done/" + str(x))
+        df[0] = df[0].apply(lambda x: "./img_done2/" + str(x))
         self.data = df
         self.image_paths = self.data.iloc[:, 0].values
         self.homographies = self.data.iloc[:, 10:].values
@@ -45,15 +46,24 @@ if __name__ == "__main__":
 
     csv_file = 'data_labels.csv'
     dataset = HomographyDatasetFromCSV(csv_file, transform=transform)
-    dataloader = DataLoader(dataset, batch_size=32, shuffle=True)
+    dataloader = DataLoader(dataset, batch_size=32, shuffle=True, num_workers=20)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = HomographyResNet().to(device)
+    if torch.cuda.device_count() > 1:
+        model = nn.DataParallel(model)
     criterion = nn.MSELoss()
+    #optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
+
     optimizer = torch.optim.Adam(model.parameters(), lr=0.001)
 
-    num_epochs = 29
+    num_epochs = 30
     for epoch in range(num_epochs):
+        if epoch > 25:
+            optimizer = torch.optim.Adam(model.parameters(), lr=0.00075)
+        elif epoch > 20:
+            optimizer = torch.optim.Adam(model.parameters(), lr=0.0009)
+        epoch_start_time = time.time()
         model.train()
         running_loss = 0.0
         for images, homographies in dataloader:
@@ -68,5 +78,7 @@ if __name__ == "__main__":
             running_loss += loss.item() * images.size(0)
 
         epoch_loss = running_loss / len(dataset)
-        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}")
+        epoch_end_time = time.time()
+        epoch_duration = epoch_end_time - epoch_start_time
+        print(f"Epoch {epoch+1}/{num_epochs}, Loss: {epoch_loss:.4f}, Time: {epoch_duration:.2f}s")
     torch.save(model.state_dict(), 'homography_model_corner.pth')
